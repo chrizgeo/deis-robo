@@ -1,0 +1,30 @@
+Scenario 1 :
+Bad weather,any kind of optical sensor will not work, GPS signal available
+Receiver antennas on four or eight sides of the vehicle or a radar antenna. 
+Martin C suggests improved camera vision in bad weather
+
+Scenario 2 :
+Good weather
+GPS sensor in the vehicle is not working and giving out random values.
+Or maybe the vehicle crashed and cannot move or localise itself. 
+Drone can be sent to the last known good GPS location to find and provide gps cordinates and safe removal of the vehicle. 
+Drone based localisation  with image processing. Vehicle rescue drone. Drone charging and deployment docks can be placed above traffic/lamp posts.
+Elaboration :
+A distress signal to the server.
+Last known GPS location is fetched. 
+Drone moves to the last known gps location.
+Takes 360 degree photos from last known location and a fixed altitude, 
+If the searching vehicle is found in the image drone moves to the vehicle and sends the gps values to the server.
+
+Scenario 3 :
+Everything is normal. 
+As presented in the paper, we can use antenna arrays to detect a curve that is ahead of us. 
+But, Martin C is not in favour of antenna or radio waves, he says implementation will be difficult.
+
+
+Scenario 4 :
+Bad weather.
+LOS methods like camera and sonar are not working
+Using RFID tags attached to lamp posts and buildings/moving vehicles we can localise our robots.
+GPS co-cordinates encoded in the RFID tag.
+Can be used for localisation on road. 
