@@ -10,15 +10,16 @@ except ImportError:
 import struct
 
 class heartbeat_message(object):
-    __slots__ = ["timestamp", "status", "isMoving", "apply_brakes"]
+    __slots__ = ["timestamp", "mode", "botUID", "isMoving", "apply_brakes"]
 
-    __typenames__ = ["int64_t", "int8_t", "boolean", "boolean"]
+    __typenames__ = ["int64_t", "int8_t", "int8_t", "boolean", "boolean"]
 
-    __dimensions__ = [None, None, None, None]
+    __dimensions__ = [None, None, None, None, None]
 
     def __init__(self):
         self.timestamp = 0
-        self.status = 0
+        self.mode = 0
+        self.botUID = 0
         self.isMoving = False
         self.apply_brakes = False
 
@@ -29,7 +30,7 @@ class heartbeat_message(object):
         return buf.getvalue()
 
     def _encode_one(self, buf):
-        buf.write(struct.pack(">qbbb", self.timestamp, self.status, self.isMoving, self.apply_brakes))
+        buf.write(struct.pack(">qbbbb", self.timestamp, self.mode, self.botUID, self.isMoving, self.apply_brakes))
 
     def decode(data):
         if hasattr(data, 'read'):
@@ -43,7 +44,7 @@ class heartbeat_message(object):
 
     def _decode_one(buf):
         self = heartbeat_message()
-        self.timestamp, self.status = struct.unpack(">qb", buf.read(9))
+        self.timestamp, self.mode, self.botUID = struct.unpack(">qbb", buf.read(10))
         self.isMoving = bool(struct.unpack('b', buf.read(1))[0])
         self.apply_brakes = bool(struct.unpack('b', buf.read(1))[0])
         return self
@@ -52,7 +53,7 @@ class heartbeat_message(object):
     _hash = None
     def _get_hash_recursive(parents):
         if heartbeat_message in parents: return 0
-        tmphash = (0xbaa1064f9b466149) & 0xffffffffffffffff
+        tmphash = (0x62dd65b5a8996ef4) & 0xffffffffffffffff
         tmphash  = (((tmphash<<1)&0xffffffffffffffff) + (tmphash>>63)) & 0xffffffffffffffff
         return tmphash
     _get_hash_recursive = staticmethod(_get_hash_recursive)

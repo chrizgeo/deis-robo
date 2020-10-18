@@ -2,7 +2,8 @@ package exlcm;
 
 struct heartbeat_message {
     int64_t timestamp;
-    int8_t status;
+    int8_t mode;
+    int8_t botUID;
     boolean isMoving;
     boolean apply_brakes;
 }
