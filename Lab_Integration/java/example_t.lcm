@@ -1,0 +1,11 @@
+package exlcm;
+
+struct example_t
+{
+    int64_t  timestamp;
+    int8_t mode;
+    int8_t botUID;
+    boolean isMoving;
+    boolean apply_brakes;
+    
+}
