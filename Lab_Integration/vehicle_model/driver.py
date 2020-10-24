@@ -6,9 +6,9 @@ from heart_beat import heartbeat_init
 import time
 import sys
 
-f1=open("SensorLogFile.txt", 'w')
+f1=open("SensorLogFile.csv", 'w')
 f1.write("Logfile of sensor data \n")
-f1.write("Received time   Local time \n")
+f1.write("Received time,Local time \n")
 
 
 lc = lcm.LCM()
@@ -27,9 +27,9 @@ heartbeat_thread.start()
 #this is used to find the jitter in time for different number of active bots
 #this logging is only done by one bot which has UID=2
 if(mode == 2 and botUID == 2):
-    f2 = open("HeartbeatLogFile.txt", 'w')
+    f2 = open("HeartbeatLogFile.csv", 'w')
     f2.write("Logfile of heartbeat data \n")
-    f2.write("Received time    Local time \n")
+    f2.write("Received time,Local time \n")
 
 def sensor_handler(channel, data):
     global mode
@@ -38,7 +38,7 @@ def sensor_handler(channel, data):
         sensor_msg = sensor_message.decode(data)
         print("Received message on  \ %s \ " %channel)
         print("Timestamp \ %s \ " %str(sensor_msg.timestamp))
-        writeString = str(sensor_msg.timestamp) + '---' + str(int(time.time()*1000)) + '\n'
+        writeString = str(sensor_msg.timestamp) + ',' + str(int(time.time()*1000)) + '\n'
         f1.write(writeString)
         if(sensor_msg.detected_obstacle == True):
             print("Obstacle \n")
@@ -60,7 +60,7 @@ def heartbeat_handler(channel, data):
     if(mode == 2):
         if(heartbeat_message_rcvd.mode == 1 and botUID == 2):
             print("Received heartbeat data from head \n")
-            writeString = str(heartbeat_message_rcvd.timestamp) + '---' + str(int(time.time()*1000)) + '\n'
+            writeString = str(heartbeat_message_rcvd.timestamp) + ',' + str(int(time.time()*1000)) + '\n'
             f2.write(writeString)
         if(heartbeat_message_rcvd.apply_brakes ==  True):
             heartbeat_thread.obstacle = True
