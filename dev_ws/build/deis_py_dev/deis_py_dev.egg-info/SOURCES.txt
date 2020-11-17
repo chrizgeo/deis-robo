@@ -9,10 +9,13 @@ setup.py
 ../../build/deis_py_dev/deis_py_dev.egg-info/top_level.txt
 ../../build/deis_py_dev/deis_py_dev.egg-info/zip-safe
 deis_py_dev/__init__.py
+deis_py_dev/drone.py
 deis_py_dev/gps.py
 deis_py_dev/main.py
+deis_py_dev/odometer.py
 deis_py_dev/sparkie.py
 deis_py_dev/teleop.py
+deis_py_dev/teleop_C.py
 resource/deis_py_dev
 test/test_copyright.py
 test/test_flake8.py

@@ -14,12 +14,13 @@ from std_msgs.msg import String
 class MainNode(Node):
         def __init__(self):
             super().__init__('main_node')
-            self.publisher_ = self.create_publisher(String, 'DIPLOMA', 10)
+            self.publisher_ = self.create_publisher(String, 'WHEEL_SPEEDS', 10)
             self.teleop_subscription = self.create_subscription(String, 'TELEOP', self.teleop_callback, 10 )
             self.teleop_subscription  # prevent unused variable warning
             #timer_period = 3
             #self.timer = self.create_timer(timer_period, self.teleop_callback)
             #self.i = 0
+            self.get_logger().info('Node init finished')
             
         ''' def timer_callback(self):
             msg = String()
@@ -29,8 +30,7 @@ class MainNode(Node):
             self.i += 10 '''
             
         def teleop_callback(self,msg):
-            #msg = String()
-            #msg.data = '%d %d' %(data.i, -da.i)
+            msg.data = msg.data + '\n'
             self.publisher_.publish(msg)
             self.get_logger().info('Publishing wheel speeds "%s"' %msg.data)
             #self.i += 10

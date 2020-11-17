@@ -26,6 +26,8 @@ setup(
             'sparkie_node = deis_py_dev.sparkie:main',
             'teleop_node = deis_py_dev.teleop:main',
             'gps_node = deis_py_dev.gps:main',
+            'odometer = deis_py_dev.odometer:main',
+            'teleop_C_node = deis_py_dev.teleop_C:main'
         ],
     },
 )

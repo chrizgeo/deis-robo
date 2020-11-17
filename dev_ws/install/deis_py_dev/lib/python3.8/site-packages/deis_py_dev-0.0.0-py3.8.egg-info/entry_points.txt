@@ -1,6 +1,8 @@
 [console_scripts]
 gps_node = deis_py_dev.gps:main
 main_node = deis_py_dev.main:main
+odometer = deis_py_dev.odometer:main
 sparkie_node = deis_py_dev.sparkie:main
+teleop_C_node = deis_py_dev.teleop_C:main
 teleop_node = deis_py_dev.teleop:main
 

@@ -1,37 +1,61 @@
-#!python3
+#! python3
+
 # Ioannis Broumas
 # ioabro17@student.hh.se
-# Christo George
-# christogeorge@live.in
 # Nov 2020
+
+from math import floor
 
 import rclpy
 from rclpy.node import Node
-
 from std_msgs.msg import String
+from geometry_msgs.msg import PointStamped
 
-class GPSNode(Node):
-        def __init__(self):
-            super().__init__('gps_node')
-            self.gps_subscription = self.create_subscription(String, '/robotPositions', self.gps_callback, 10 )
-            #self.publisher_ = self.create_publisher(String, 'Group1', 10)
-            
-        def gps_callback(self,msg):
-            self.get_logger().info('Publishing')
-            self.get_logger().info('Publishing: "%s"' %msg.data)
-            
+class GPS(Node):
+
+    def __init__(self):
+        super().__init__('gps')
+        self.publisher_ = self.create_publisher(String, 'GPS', 10)
+        self.subscription = self.create_subscription(
+            String,
+            '/robotPositions',
+            self.listener_callback,
+            10)
+        self.subscription  # prevent unused variable warning
+
+    def listener_callback(self, msg):
+        self.get_logger().info('I heard: "%s"' % msg.data)
+        timestamp = self.get_clock().now().to_msg()
+        Latitude = msg.data[0]
+        Longitude = msg.data[1]
+        LongDeg = floor(Longitude/100) + (Longitude - floor(Longitude/100)*100)/60
+        LatDeg = floor(Latitude/100) + (Latitude - floor(Latitude/100)*100)/60
+
+        F_lon = 62393
+        F_lat = 111342
+
+        X = F_lon * LongDeg
+        Y = F_lat * LatDeg
+        point = PointStamped()
+        point.header.frame_id = "gps"
+        point.header.stamp = timestamp
+        point.x = X
+        point.y = Y
+        point.z = 0
+        self.publisher_(point)
+
+
 
 def main(args=None):
-        rclpy.init(args=args)
-        g = GPSNode()
-        #msg = String()
-        #msg.data = 'Hello from Group1!'
-        #g.publisher_.publish(msg)
-        rclpy.spin(g)
+    rclpy.init(args=args)
+    g = GPS()
+    rclpy.spin(g)
+    # Destroy the node explicitly
+    # (optional - otherwise it will be done automatically
+    # when the garbage collector destroys the node object)
+    g.destroy_node()
+    rclpy.shutdown()
 
-        #destroy is optional
-        g.destroy_node()
-        rclpy.shutdown()
 
 if __name__ == '__main__':
     main()
