@@ -21,13 +21,20 @@ class GPS(Node):
             '/robotPositions',
             self.listener_callback,
             10)
-        self.subscription  # prevent unused variable warning
+        self.subscription = self.create_subscription(
+            String,
+            'action',
+            self.action_callback,
+            10)
+        self.get_logger().info('Node GPS initialized!')
 
     def listener_callback(self, msg):
-        self.get_logger().info('I heard: "%s"' % msg.data)
         timestamp = self.get_clock().now().to_msg()
-        Latitude = msg.data[0]
-        Longitude = msg.data[1]
+        data = msg.data.strip("[]'")
+        data = data.split(sep=";")
+        data = data[0] # Group1 should be first, change accordingly
+        Latitude = float(data[0])
+        Longitude = float(data[1])
         LongDeg = floor(Longitude/100) + (Longitude - floor(Longitude/100)*100)/60
         LatDeg = floor(Latitude/100) + (Latitude - floor(Latitude/100)*100)/60
 
@@ -43,6 +50,15 @@ class GPS(Node):
         point.y = Y
         point.z = 0
         self.publisher_(point)
+        
+    def action_callback(self, msg):
+        timestamp = self.get_clock().now().to_msg()
+        data = msg.data.split(sep=",")
+        data = data[5].split(sep=";")
+        msg = String()
+        msg.data = data[0] + " " + data[1]
+        self.publisher_.publish(msg)
+        
 
 
 

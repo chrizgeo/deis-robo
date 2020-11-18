@@ -61,18 +61,18 @@ def main(args=None):
         print(key)
         if key == "8": # Forward
             # motors.drive(255); # forward
-            msg.data = '255 -255'
+            msg.data = '255 255'
         elif key == "2": # Reverse
             # motors.drive(-255); 
-            msg.data = '-255 255'
+            msg.data = '-255 -255'
         elif key == "6": # Right
             # motors.leftMotor(-200) 
             # motors.rightMotor(100) 
-            msg.data = '-200 100'
+            msg.data = '200 100'
         elif key == "4": # Left
             # motors.leftMotor(-100) 
             # motors.rightMotor(200) 
-            msg.data = '-100 200'
+            msg.data = '100 200'
         elif key == "9": # Spin Right
             msg.data = '-90 90'
         elif key == "7": # Spin Left

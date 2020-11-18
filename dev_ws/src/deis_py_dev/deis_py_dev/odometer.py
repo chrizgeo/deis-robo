@@ -1,4 +1,4 @@
-#!usr/bin/env/python3
+#! usr/bin/env/python3
 
 # Ioannis Broumas
 # ioabro17@student.hh.se
@@ -35,7 +35,7 @@ class Odometer(Node):
             String,
             'odom_raw',
             self.listener_callback,
-            10)
+            20)
         self.subscription  # prevent unused variable warning
 
         # self.odom_broadcaster = tf2_ros.TransformBroadcaster()
@@ -43,8 +43,8 @@ class Odometer(Node):
         self.odom_broadcaster = tf2_ros.TransformBroadcaster(self,qos=qos_profile)
 
         self.dt = 0.1
-        self.WHEEL_BASE = 55
-        self.WHEEL_DIAMETER = 65 # (mm)
+        self.WHEEL_BASE = 0.12
+        self.WHEEL_DIAMETER = 0.065 # (mm)
         self.PULSES_PER_REVOLUTION = 192 # ticks per wheel revolution
         self.MM_PER_PULSE = pi*self.WHEEL_DIAMETER / self.PULSES_PER_REVOLUTION; 
         self.SIGMA_WHEEL_ENCODER = 0.5/12;   # The error in the encoder is 0.5mm / 12mm travelled
@@ -62,6 +62,7 @@ class Odometer(Node):
         self.A = 0 # 90*pi / 180
         # Uncertainty in state variables [3x3]
         self.P = [ [1, 0, 0], [0, 1, 0], [0, 0, (1*pi/180)**2] ]
+        self.get_logger().info('Node Odometer initialized!')
 
     # Do KF also
     def listener_callback(self, msg):
@@ -69,26 +70,27 @@ class Odometer(Node):
         data = msg.data.split(sep="_")
         #current_time = data[0]
         current_time = self.get_clock().now().to_msg()
-        left_ticks = int(data[0])
+        left_ticks = -int(data[0])
         right_ticks = int(data[1])
         # Transform encoder values (pulses) into distance travelled by the wheels (mm)
         new_Dl = left_ticks * self.MM_PER_PULSE
         new_Dr = right_ticks * self.MM_PER_PULSE
         # Change of wheel displacements, i.e displacement of left and right wheels
-        dDr = new_Dr - self.Dr
-        dDl = new_Dl - self.Dl
+        dDr = new_Dr
+        dDl = new_Dl
         self.Dr = new_Dl
         self.Dl = new_Dl
         # The changes in the forward direction (δd) and heading (δθ)
-        dD = (dDr + dDl) / 2 
+        dD = (dDr + dDl) / 2.0 
         dA = (dDr - dDl) / self.WHEEL_BASE
+        print(current_time)
         # Calculate the change in X and Y (World co-ordinates)    
         dX = dD*cos( self.A + dA/2 )*self.dt
         dY = dD*sin( self.A + dA/2 )*self.dt
         # Predict the new state variables (World co-ordinates)
         self.X = self.X + dX
         self.Y = self.Y + dY
-        # self.A = (self.A + dA) % (2*pi)
+        self.A = (self.A + dA) % (2*pi)
         # Predict the new uncertainty in the state variables (Error prediction)
         # Cxya_old = [ P[0], P[1], P[2] ]   # Uncertainty in state variables at time k-1 [3x3]
         # Uncertainty in the input variables [2x2]
@@ -107,7 +109,7 @@ class Odometer(Node):
         # self.P = Axya @ self.P @ invP + Au @ Cu @ invAu
         # Store the new co-variance matrix
         #P(kk,1:9) = [Cxya_new(1,1:3) Cxya_new(2,1:3) Cxya_new(3,1:3)]
-        self.A = (self.A + dA) % (2*pi)
+        #self.A = (self.A + dA) % (2*pi)
 
 
         # since all odometry is 6DOF we'll need a quaternion created from yaw
@@ -126,11 +128,6 @@ class Odometer(Node):
         t.transform.translation.z = 0.0
         t.transform.rotation = euler_to_quaternion(0, 0, self.A)
 
-        #t.transform.rotation.x = odom_quat[0]
-        #t.transform.rotation.y = odom_quat[1]
-        #t.transform.rotation.z = odom_quat[2]
-        #t.transform.rotation.w = odom_quat[3]
-        
         # send the transform
         #qos_profile = QoSProfile(depth=10)
         #odom_broadcaster = tf2_ros.TransformBroadcaster(Node,qos=qos_profile)
@@ -148,10 +145,6 @@ class Odometer(Node):
         odom.pose.pose.position.z = 0.0
         
         odom.pose.pose.orientation = euler_to_quaternion(0, 0, self.A)
-        #odom.pose.pose.orientation.x = odom_quat[0]
-        #odom.pose.pose.orientation.y = odom_quat[1]
-        #odom.pose.pose.orientation.z = odom_quat[2]
-        #odom.pose.pose.orientation.w = odom_quat[3]
         
         # set the velocity
         odom.child_frame_id = "base_link"

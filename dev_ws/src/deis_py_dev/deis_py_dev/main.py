@@ -20,7 +20,7 @@ class MainNode(Node):
             #timer_period = 3
             #self.timer = self.create_timer(timer_period, self.teleop_callback)
             #self.i = 0
-            self.get_logger().info('Node init finished')
+            self.get_logger().info('Node Main initialized!')
             
         ''' def timer_callback(self):
             msg = String()
