@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Mon Nov 16 10:03:30 2020
-
 @author: Meerashine Joe
 @ Christo George christogeorge@live.in
 """
@@ -102,4 +101,3 @@ def main(args=None):
 if __name__ == '__main__':
     main()
 
-   

@@ -28,7 +28,9 @@ setup(
             'gps = deis_py_dev.gps:main',
             'odometer = deis_py_dev.odometer:main',
             'imu = deis_py_dev.imu:main',
-            'teleop_C_node = deis_py_dev.teleop_C:main'
+            'teleop_C_node = deis_py_dev.teleop_C:main',
+            'follower = deis_py_dev.follower:main',
+            'drone = deis_py_dev.drone:main'
         ],
     },
 )

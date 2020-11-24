@@ -49,7 +49,7 @@ class Tele(Node):
 
     def __init__(self):
         super().__init__('tele') # name
-        self.publisher_ = self.create_publisher(String, 'TELEOP', 10)
+        self.publisher_ = self.create_publisher(String, 'teleop', 10)
         #self.subscription  # prevent unused variable warning
 
 def main(args=None):
@@ -60,27 +60,27 @@ def main(args=None):
         key = getKey(2)
         print(key)
         if key == "8": # Forward
-            # motors.drive(255); # forward
-            msg.data = '255 255'
+            # motors.drive(150); # forward
+            msg.data = '150 150\n'
         elif key == "2": # Reverse
-            # motors.drive(-255); 
-            msg.data = '-255 -255'
+            # motors.drive(-150); 
+            msg.data = '-150 -150\n'
         elif key == "6": # Right
             # motors.leftMotor(-200) 
             # motors.rightMotor(100) 
-            msg.data = '200 100'
+            msg.data = '200 100\n'
         elif key == "4": # Left
             # motors.leftMotor(-100) 
             # motors.rightMotor(200) 
-            msg.data = '100 200'
+            msg.data = '100 200\n'
         elif key == "9": # Spin Right
-            msg.data = '-90 90'
+            msg.data = '-90 90\n'
         elif key == "7": # Spin Left
-            msg.data = '90 -90'
+            msg.data = '90 -90\n'
         elif key == "Q" or key == "q": #exit key 
             break
         else:
-            msg.data = '0 0'
+            msg.data = '0 0\n'
         t.publisher_.publish(msg)
         t.get_logger().info('Publishing: "%s"' % msg.data)
 

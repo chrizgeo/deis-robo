@@ -2,6 +2,8 @@
 
 # Ioannis Broumas
 # ioabro17@student.hh.se
+# Christo George
+# christogeorge@live.in
 # Nov 2020
 
 from math import floor
@@ -15,20 +17,20 @@ class GPS(Node):
 
     def __init__(self):
         super().__init__('gps')
-        self.publisher_ = self.create_publisher(String, 'GPS', 10)
-        self.subscription = self.create_subscription(
+        self.publisher_ = self.create_publisher(PointStamped, 'GPS', 10)
+        self.subscription_positions = self.create_subscription(
             String,
             '/robotPositions',
-            self.listener_callback,
+            self.positions_callback,
             10)
-        self.subscription = self.create_subscription(
+        self.subscription_actions = self.create_subscription(
             String,
             'action',
             self.action_callback,
             10)
         self.get_logger().info('Node GPS initialized!')
 
-    def listener_callback(self, msg):
+    def positions_callback(self, msg):
         timestamp = self.get_clock().now().to_msg()
         data = msg.data.strip("[]'")
         data = data.split(sep=";")
@@ -46,10 +48,11 @@ class GPS(Node):
         point = PointStamped()
         point.header.frame_id = "gps"
         point.header.stamp = timestamp
-        point.x = X
-        point.y = Y
-        point.z = 0
-        self.publisher_(point)
+        point.point.x = X
+        point.point.y = Y
+        point.point.z = 0.0
+        #self.get_logger().info("Got cordinates %f %f" %(X, Y))
+        self.publisher_.publish(point)
         
     def action_callback(self, msg):
         timestamp = self.get_clock().now().to_msg()
