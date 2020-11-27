@@ -32,7 +32,7 @@ class Tello:
         self.is_freeze = False  # freeze current camera output
         self.last_frame = None
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # socket for sending cmd
-        self.socket_video = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # socket for receiving video stream
+        #self.socket_video = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # socket for receiving video stream
         self.tello_ip = tello_ip
         self.tello_address = (tello_ip, tello_port)
         self.local_video_port = 11111  # port for receiving video stream
@@ -51,7 +51,7 @@ class Tello:
         self.socket.sendto(b'streamon', self.tello_address)
         print ('sent: streamon')
 
-        self.socket_video.bind((local_ip, self.local_video_port))
+        #self.socket_video.bind((local_ip, self.local_video_port))
 
         # thread for receiving video
         self.receive_video_thread = threading.Thread(target=self._receive_video_thread)
@@ -91,28 +91,32 @@ class Tello:
             except socket.error as exc:
                 print ("Caught exception socket.error : %s" % exc)
 
-    def _receive_video_thread(self):
-        """
-        Listens for video streaming (raw h264) from the Tello.
+    # def _receive_video_thread(self):
+    #     """
+    #     Listens for video streaming (raw h264) from the Tello.
 
-        Runs as a thread, sets self.frame to the most recent frame Tello captured.
+    #     Runs as a thread, sets self.frame to the most recent frame Tello captured.
 
-        """
-        packet_data = bytes()
-        while True:
-            try:
-                res_string, ip = self.socket_video.recvfrom(2048) #res_string is of type bytes
-                packet_data += res_string
-                # end of frame
-                if len(res_string) != 1460:
-                    for frame in self._h264_decode(packet_data):
-                        self.frame = frame
-                    packet_data = bytes()
-                    print(sys.getsizeof(packet_data))
+    #     """
+    #     packet_data = bytes()
+    #     while True:
+    #         try:
+    #             res_string, ip = self.socket_video.recvfrom(2048) #res_string is of type bytes
+    #             packet_data += res_string
+    #             # end of frame
+    #             if len(res_string) != 1460:
+    #                 for frame in self._h264_decode(packet_data):
+    #                     self.frame = frame
+    #                 packet_data = bytes()
 
-            except socket.error as exc:
-                print ("Caught exception socket.error : %s" % exc)
+    #         except socket.error as exc:
+    #             print ("Caught exception socket.error : %s" % exc)
     
+    def _receive_video_thread(self):
+        cap = cv2.VideoCapture('udp://'+self.tello_ip+':11111')
+        while True:
+            ret, self.frame = cap.read()
+
     def _h264_decode(self, packet_data):
         """
         decode raw h264 format data from Tello
