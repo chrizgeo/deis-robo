@@ -5,11 +5,13 @@
 # Nov 2020
 # Remember OpenCV is BGR
 
+import os
 import sys
 import cv2 as cv
 import numpy as np
-import cv2.aruco as aruco
+from cv2 import aruco
 import glob
+import pickle
 
 #ROS 2
 import rclpy
@@ -18,17 +20,23 @@ from std_msgs.msg import String
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Range
 
+# Check for camera calibration data
+if not os.path.exists('/home/ubuntu/dev_ws/src/deis_py_dev/cameraCalibrations/sparkieCalibration.pckl'):
+    print("You need to calibrate the camera you'll be using. See calibration project directory for details.")
+    exit()
+else:
+    f = open('/home/ubuntu/dev_ws/src/deis_py_dev/cameraCalibrations/sparkieCalibration.pckl', 'rb')
+    (cameraMatrix, distCoeffs) = pickle.load(f)
+    f.close()
+    if cameraMatrix is None or distCoeffs is None:
+        print("Calibration issue. Remove ./calibration.pckl and recalibrate your camera with CalibrateCamera.py.")
+        exit()
+
 # Constant parameters used in Aruco methods
 ARUCO_PARAMETERS = aruco.DetectorParameters_create()
 ARUCO_DICT = aruco.Dictionary_get(aruco.DICT_6X6_250)
 
-# Create grid board object we're using in our stream
-#board = aruco.GridBoard_create(
-#        markersX=2,
-#        markersY=2,
-#        markerLength=0.09,
-#        markerSeparation=0.01,
-#        dictionary=ARUCO_DICT)
+measuredLength = 3.2 # Measured length of one side of the printed marker cm
 
 # Create vectors we'll be using for rotations and translations for postures
 rvecs, tvecs = None, None
@@ -45,8 +53,9 @@ def main(args=None):
 
     f = Follower()
     msg = String()
+    msg.data = '0 0\n'
 
-    base_speed = 70
+    base_speed = 90
 
     # Read the video stream
     cap = cv.VideoCapture(0)
@@ -79,10 +88,26 @@ def main(args=None):
         corners, ids, rejectedImgPoints = aruco.detectMarkers(gray, ARUCO_DICT, parameters=ARUCO_PARAMETERS)
         
         if ids is not None:
-            # # Print corners and ids to the console
-            # for i, corner in zip(ids, corners):
+            # Print corners and ids to the console
+            #for i, corner in zip(ids, corners):
             #     print('ID: {}; Corners: {}'.format(i, corner))
-            
+            #     if id[i] == 2:
+            #     	print(corner[i])
+            if 2 in ids:
+            	idx = list(ids).index(2)
+            	print(idx)
+            	print(ids[idx])
+            	print(corners[idx])
+            	corner = corners[idx]
+            	# Get center
+            	cx = (corner[0][0][0] + corner[0][1][0] + corner[0][2][0] + corner[0][3][0]) / 4
+            	cy = (corner[0][0][1] + corner[0][1][1] + corner[0][2][1] + corner[0][3][1]) / 4
+            	print("C_X: %d" %cx)
+            	print("C_Y: %d" %cy)
+            	rvecs, tvecs, _objPoints = aruco.estimatePoseSingleMarkers(corner, measuredLength, cameraMatrix, distCoeffs)
+            	distance = cv.norm(tvecs)
+            	print(distance) 
+
             # Outline all of the markers detected in our image
             frame = aruco.drawDetectedMarkers(frame, corners, borderColor=(0, 0, 255))
             # Get center
@@ -90,38 +115,50 @@ def main(args=None):
             center_y = (corners[0][0][0][1] + corners[0][0][1][1] + corners[0][0][2][1] + corners[0][0][3][1]) / 4
             print("Center X: %d" %center_x)
             print("Center Y: %d" %center_y)
-            
-            
-            #rvecs, tvecs = aruco.estimatePoseSingleMarkers(corners, 1, cameraMatrix, distCoeffs)
-            #print(cv.norm(tvecs)) 
+
+            rvecs, tvecs, _objPoints = aruco.estimatePoseSingleMarkers(corners, measuredLength, cameraMatrix, distCoeffs)
+            distance = cv.norm(tvecs)
+            print(distance)
 
             # Find center
             cam_center = HorizontalPixels / 2
 
-            if center_x < cam_center:
-                gain = int((cam_center - center_x) / 10)
-                LM = base_speed 
-                RM = base_speed + gain
-                msg.data = '%d %d\n' %(LM, RM)
+            if distance < 17.0:
+                msg.data = '0 0\n'
                 f.publisher_.publish(msg)
-                f.get_logger().info('Publishing: "%s"' % msg.data)
+                f.get_logger().info('1. Publishing: "%s"' % msg.data)
             elif center_x > cam_center:
-                gain = int((center_x - cam_center) / 10)
+                gain = int((cam_center - center_x) / 10)
                 LM = base_speed + gain
                 RM = base_speed 
                 msg.data = '%d %d\n' %(LM, RM)
                 f.publisher_.publish(msg)
-                f.get_logger().info('Publishing: "%s"' % msg.data)
+                f.get_logger().info('2. Publishing: "%s"' % msg.data)
+            elif center_x < cam_center:
+                gain = int((center_x - cam_center) / 10)
+                LM = base_speed 
+                RM = base_speed + gain
+                msg.data = '%d %d\n' %(LM, RM)
+                f.publisher_.publish(msg)
+                f.get_logger().info('3. Publishing: "%s"' % msg.data)
             else:
                 LM = base_speed
                 RM = base_speed 
                 msg.data = '%d %d\n' %(LM, RM)
                 f.publisher_.publish(msg)
-                f.get_logger().info('Publishing: "%s"' % msg.data)
+                f.get_logger().info('4. Publishing: "%s"' % msg.data)
 
- 
-        f.get_logger().info('Publishing: "%s"' % msg.data)
-            
+        # No marker found
+        else:
+            msg.data = '0 0\n'
+            f.publisher_.publish(msg)
+            f.get_logger().info('5. Publishing: "%s"' % msg.data)
+
+        f.get_logger().info('6. Publishing: "%s"' % msg.data)
+        
+        #frame_resized = cv.resize(frame, (640,360))    
+        #cv.imshow("Snapshot", frame_resized)
+        
         cv.imshow("Snapshot", frame)
             
         if cv.waitKey(10) == 27: # Wait for 10ms, if key == 27 (esc char) break
