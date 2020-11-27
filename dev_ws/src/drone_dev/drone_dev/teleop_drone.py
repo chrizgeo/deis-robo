@@ -64,10 +64,6 @@ def main(args=None):
                 command = 'takeoff'
             elif key == "l":
                 command = 'land'
-            elif key == "v":
-                command = "view"
-            elif key == "b":
-                command = "stop_view"
             elif key == '\x03': #exit key 
                 break
             else:
