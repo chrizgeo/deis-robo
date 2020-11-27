@@ -57,7 +57,7 @@ def main(args=None):
     t = Tele()
     msg = String()
     while True:
-        key = getKey(2)
+        key = getKey(0.3)
         print(key)
         if key == "8": # Forward
             # motors.drive(150); # forward
