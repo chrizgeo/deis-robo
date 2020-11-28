@@ -14,6 +14,7 @@ import time
 from rclpy.node import Node
 from drone_dev.tello import Tello
 from std_msgs.msg import String
+from drone_dev.tracker_aruco import *
 from PIL import Image
 import datetime
 
@@ -27,28 +28,25 @@ class droneActor(Node):
         self.subscription  # prevent unused variable warning
         self.timer = self.create_timer(20, self.check_drone_battery)
         self.drone = Tello('', 8889)
-        self.frame = None 
-        self.stream_state = False
+        self.frame = None
+        self.aruco_frame = None
+        self.stream_state = True
         res = self.drone.send_command('command')
         #res = self.drone.send_command('wifi GROUP1-DRONE verygood')
         self.get_logger().info("Init done")
-        #self.opencv_streamon()
+        self.stream_on()
 
     def __del__(self):
         if(self.stream_state == True):
-            self.opencv_streamoff()
-            cv2.destroyAllWindows()
+            self.stream_off()
 
+    #callback for messages received on the drone teleop channel
     def drone_actor_callback(self, msg):
         self.get_logger().info('Got command: "%s"' % msg.data)
         if('' != msg.data):
-            if('view' == msg.data):
-                self.opencv_streamon()
-            elif('stop_view' == msg.data):
-                self.opencv_streamoff()
-            else:
-                self.drone.send_command(msg.data)
+            self.drone.send_command(msg.data)
     
+    #check battery and land if battery is less than 10 percentage
     def check_drone_battery(self):
         battery_level = self.drone.get_battery()
         self.get_logger().info("Battery level %s" % battery_level)
@@ -58,40 +56,64 @@ class droneActor(Node):
             self.get_logger().error("Low battery landing")
             self.drone.send_command('land')
     
-    def opencv_video_thread(self):
+    #this video veiwing thread runs for the entire time the node is running
+    def video_view_thread(self):
         self.get_logger().info("Opencv video thread started")
-        now=datetime.datetime.now()
+        
+        # wait till we get a valid frame from the drone camera
+        while(self.drone.read() is None):
+            print("Waiting for video input")
+            time.sleep(1)
+        self.get_logger().info("Got valid frame, open window now")
+
+        #calibrate camera
+        #TODO implement camera calibration
+        #calibrate_camera()
+
+        #open the window for the video stream    
+        stream_window = "Video stream"
+        cv2.namedWindow(stream_window)
+        
+        #write the video data to a file
+        """ now=datetime.datetime.now()
         fileEnd = "%d-%d-%d_%d-%d-%d" % (now.year, now.month, now.day, now.hour, now.minute, now.second)
         videofile = "video/%s.avi" % fileEnd
         fourcc = cv2.VideoWriter_fourcc('X','V','I','D')
-        video_ = cv2.VideoWriter(videofile, fourcc, 20.0, (960, 720))
+        video_ = cv2.VideoWriter(videofile, fourcc, 20.0, (960, 720)) """
+        
         # Runs while 'stream_state' is True
+        # the stream_state boolean is used to keep the thread alive
         while self.stream_state:
-                        # read the frame for GUI show
+                
+                # read the frame from the drone camera
                 self.frame = self.drone.read()
                 if self.frame is None or self.frame.size == 0:
                     continue 
                 # transfer the format from frame to image         
-                image = Image.fromarray(self.frame)
-                cv2.imshow('Group 1 - Air surveillance', self.frame)
-                video_.write(self.frame)
+                #image = Image.fromarray(self.frame)
+                cv2.imshow(stream_window, self.frame)
+                #write video to file
+                """ video_.write(self.frame) """
 
                 # Video Stream is closed if escape key is pressed
                 k = cv2.waitKey(1) & 0xFF
                 if k == 27:
                     break
-        cv2.destroyAllWindows()
-        video_.release()
+        cv2.destroyWindow(stream_window)
+        #release the video file
+        """ video_.release() """
 
-
-    def opencv_streamon(self):
+    #start the video viewing thread to display the current video
+    def stream_on(self):
         self.stream_state = True
-        self.video_thread = threading.Thread(target=self.opencv_video_thread)
+        self.video_thread = threading.Thread(target=self.video_view_thread)
         self.video_thread.daemon = True
         self.video_thread.start()
    
-    def opencv_streamoff(self):
+    #stop the video viewing thread
+    def stream_off(self):
         self.stream_state = False
+        self.video_thread.stop()
 
 def main(args=None):
     rclpy.init(args=args)
