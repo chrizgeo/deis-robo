@@ -25,7 +25,7 @@ class SparkieNode(Node):
         self.subscription = self.create_subscription(String, 'cam_follower', self.cam_callback, 10 )
         self.publisher_odom = self.create_publisher(String, 'odom_raw', 50)
         self.publisher_imu = self.create_publisher(String, 'imu_r', 10)
-        timer_period = 0.01 # seconds
+        timer_period = 0.1 # seconds
         self.timer = self.create_timer(timer_period, self.get_sensorData_callback)
         self.ser = serial.Serial(port="/dev/ttyUSB0", baudrate=115200)
         #self.sensor_readings_file = open("data/sensor-readings.csv", "w")
@@ -49,15 +49,23 @@ class SparkieNode(Node):
     		data = self.ser.readline().decode()
     		#self.sensor_readings_file.write(data)
     		data = data.split(sep=" ")
-    		current_time = self.get_clock().now().to_msg()
-    		msg_imu = String()
-    		#msg_imu.data = current_time + "_" + data[0]
-    		msg_imu.data = data[0]
-    		self.publisher_imu.publish(msg_imu)
-    		msg_enc = String()
-    		#msg_enc.data = current_time + "_" + data[1]
-    		msg_enc.data = data[1]
-    		self.publisher_odom.publish(msg_enc)
+    		# current_time = self.get_clock().now().to_msg()
+            # Validate data
+            if len(data) == 2:
+                msg_enc = String()
+                #msg_enc.data = current_time + "_" + data[0]
+                msg_enc.data = data[0]
+                self.publisher_odom.publish(msg_enc)
+                msg_imu = String()
+                #msg_imu.data = current_time + "_" + data[1]
+                msg_imu.data = data[1]
+                self.publisher_imu.publish(msg_imu)
+            else:
+                msg_enc = String()
+                #msg_enc.data = current_time + "_" + data[1]
+                msg_enc.data = data[0]
+                self.publisher_odom.publish(msg_enc)
+                self.get_logger().info('Missed Data!')
     		
 
 def main(args=None):
