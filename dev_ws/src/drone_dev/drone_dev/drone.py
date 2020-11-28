@@ -14,7 +14,7 @@ import time
 from rclpy.node import Node
 from drone_dev.tello import Tello
 from std_msgs.msg import String
-from drone_dev.tracker_aruco import *
+from drone_dev.tracker_aruco import arucoTracker
 from PIL import Image
 import datetime
 
@@ -28,12 +28,22 @@ class droneActor(Node):
         self.subscription  # prevent unused variable warning
         self.timer = self.create_timer(20, self.check_drone_battery)
         self.drone = Tello('', 8889)
+        # for streaming
         self.frame = None
+        # for aruco detection
+        self.aruco_tracker = arucoTracker()
         self.aruco_frame = None
+        self.detected_ids = {}
+
+        #always streaming
         self.stream_state = True
+        
+        # set the drone to command mode
         res = self.drone.send_command('command')
         #res = self.drone.send_command('wifi GROUP1-DRONE verygood')
         self.get_logger().info("Init done")
+
+        #start the stream window
         self.stream_on()
 
     def __del__(self):
@@ -66,10 +76,6 @@ class droneActor(Node):
             time.sleep(1)
         self.get_logger().info("Got valid frame, open window now")
 
-        #calibrate camera
-        #TODO implement camera calibration
-        #calibrate_camera()
-
         #open the window for the video stream    
         stream_window = "Video stream"
         cv2.namedWindow(stream_window)
@@ -91,7 +97,9 @@ class droneActor(Node):
                     continue 
                 # transfer the format from frame to image         
                 #image = Image.fromarray(self.frame)
-                cv2.imshow(stream_window, self.frame)
+                #cv2.imshow(stream_window, self.frame)
+                self.aruco_frame , self.detected_ids = self.aruco_tracker.track_aruco(self.frame)
+                cv2.imshow(stream_window, self.aruco_frame)
                 #write video to file
                 """ video_.write(self.frame) """
 
