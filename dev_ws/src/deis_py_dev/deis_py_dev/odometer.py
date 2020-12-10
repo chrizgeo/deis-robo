@@ -50,7 +50,7 @@ class Odometer(Node):
         self.WHEEL_BASE = 0.12
         self.WHEEL_DIAMETER = 0.065 # (m)
         self.PULSES_PER_REVOLUTION = 192 # ticks per wheel revolution
-        self.MM_PER_PULSE = pi*self.WHEEL_DIAMETER / self.PULSES_PER_REVOLUTION; 
+        self.MM_PER_PULSE = pi*self.WHEEL_DIAMETER / self.PULSES_PER_REVOLUTION
         self.SIGMA_WHEEL_ENCODER = 0.5/12;   # The error in the encoder is 0.5mm / 12mm travelled
         # Use the same uncertainty in both of the wheel encoders
         self.SIGMAl = self.SIGMA_WHEEL_ENCODER
