@@ -78,6 +78,7 @@ class CMD(Node):
         right_percentage = int(round(right_percentage))
         #
         msg.data = '%s %s \n' % (left_percentage, right_percentage)
+        self.get_logger().info('Sending %s %s' % (left_percentage, right_percentage))
         self.publisher_.publish(msg)
 
 def main(args=None):
