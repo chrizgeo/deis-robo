@@ -22,15 +22,16 @@ setup(
         'console_scripts': [
             #these nodes are from the package deis_py_dev
             #you run these nodes
-            'main_node = deis_py_dev.main:main',
             'sparkie = deis_py_dev.sparkie:main',
+            'main_node = deis_py_dev.main:main',
             'teleop = deis_py_dev.teleop:main',
+            'teleop_C_node = deis_py_dev.teleop_C:main',
+            'teleop_cmd = deis_py_dev.teleop_cmd:main',
             'gps = deis_py_dev.gps:main',
             'odometer = deis_py_dev.odometer:main',
             'imu = deis_py_dev.imu:main',
-            'teleop_C_node = deis_py_dev.teleop_C:main',
             'follower = deis_py_dev.follower:main',
-            'drone = deis_py_dev.drone:main'
+            'drone = deis_py_dev.drone:main',
             'roof = deis_py_dev.roof:main'
         ],
     },
