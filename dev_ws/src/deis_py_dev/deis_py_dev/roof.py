@@ -5,7 +5,7 @@
 # Dec 2020
 # Remember OpenCV is BGR
 # Read the camera on the roof and detect the location of ArUco markers on the map
-# Can be adapted to detect something else on the board
+# Can be adjusted to detect something else on the board
 
 import numpy as np
 import cv2 as cv
