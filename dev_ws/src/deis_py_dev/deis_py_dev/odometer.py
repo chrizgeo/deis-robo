@@ -16,7 +16,6 @@ from std_msgs.msg import String
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist, Vector3, Quaternion, TransformStamped
 import tf2_ros
-
 from rclpy.qos import QoSProfile
 
 def euler_to_quaternion(roll, pitch, yaw):
@@ -36,15 +35,14 @@ class Odometer(Node):
             String,
             'odom_raw',
             self.listener_callback,
-            50)
-        self.subscription  # prevent unused variable warning
-
+            10)
         # self.odom_broadcaster = tf2_ros.TransformBroadcaster()
-        qos_profile = QoSProfile(depth=10)
+        qos_profile = QoSProfile(depth=50)
         self.odom_broadcaster = tf2_ros.TransformBroadcaster(self,qos=qos_profile)
 
         self.current_time = self.get_clock().now().to_msg()
         self.last_time = None
+        self.get_logger().info('Node Odometer initialized!')
 
         # Robot initialization
         self.WHEEL_BASE = 0.12
@@ -64,8 +62,6 @@ class Odometer(Node):
         self.A = 0 # 90*pi / 180
         # Uncertainty in state variables [3x3]
         self.P = [ [1, 0, 0], [0, 1, 0], [0, 0, (1*pi/180)**2] ]
-        
-        self.get_logger().info('Node Odometer initialized!')
 
     # Do KF also
     def listener_callback(self, msg):
@@ -77,14 +73,14 @@ class Odometer(Node):
             return
         if not data[0].lstrip('-').isdigit() or not data[1].lstrip('-').isdigit():
             self.get_logger().info('Missed Data!')
-            return            
-        left_ticks = int(data[0])
-        right_ticks = -int(data[1])
+            return
+        left_ticks = -int(data[0])
+        right_ticks = int(data[1])
         # Transform encoder values (pulses) into distance travelled by the wheels (mm)
         # Change of wheel displacements, i.e displacement of left and right wheels
         dDr = left_ticks * self.MM_PER_PULSE
         dDl = right_ticks * self.MM_PER_PULSE
-        if dDl < 300 and dDr < 300: # Threshold reject outliers
+        if dDl < 150 and dDr < 150: # Threshold reject outliers
             self.current_time = self.get_clock().now().to_msg()
             if self.last_time == None:
                 dt = 0.1

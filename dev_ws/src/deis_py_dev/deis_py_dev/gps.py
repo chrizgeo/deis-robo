@@ -11,13 +11,13 @@ from math import floor
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
-from geometry_msgs.msg import PointStamped
+from geometry_msgs.msg import Point
 
 class GPS(Node):
 
     def __init__(self):
         super().__init__('gps')
-        self.publisher_ = self.create_publisher(PointStamped, 'GPS', 10)
+        self.publisher_ = self.create_publisher(Point, 'GPS', 10)
         self.subscription_positions = self.create_subscription(
             String,
             '/robotPositions',
@@ -45,12 +45,10 @@ class GPS(Node):
 
         X = F_lon * LongDeg
         Y = F_lat * LatDeg
-        point = PointStamped()
-        point.header.frame_id = "gps"
-        point.header.stamp = timestamp
-        point.point.x = X
-        point.point.y = Y
-        point.point.z = 0.0
+        point = Point()
+        point.x = X
+        point.y = Y
+        point.z = 0.0
         #self.get_logger().info("Got cordinates %f %f" %(X, Y))
         self.publisher_.publish(point)
         

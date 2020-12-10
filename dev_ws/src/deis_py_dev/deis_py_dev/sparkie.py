@@ -11,16 +11,17 @@
 import serial
 import datetime
 
+#ROS 2
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 
-class SparkieNode(Node):
+class Sparkie(Node):
 
     def __init__(self):
-        super().__init__('sparkie_subscriber')
-        self.subscription = self.create_subscription(String, 'WHEEL_SPEEDS', self.wheelspeed_callback, 10 ) 
-        self.subscription = self.create_subscription(String, 'teleop', self.teleop_callback, 10 ) 
+        super().__init__('sparkie')
+        self.subscription = self.create_subscription(String, 'WHEEL_SPEEDS', self.wheelspeed_callback, 10 ) # Don't change this
+        self.subscription = self.create_subscription(String, 'teleop', self.teleop_callback, 10 ) # Don't change this
         self.subscription = self.create_subscription(String, 'GPS', self.gps_callback, 10 )
         self.subscription = self.create_subscription(String, 'cam_follower', self.cam_callback, 10 )
         self.subscription = self.create_subscription(String, 'cmd', self.cmd_callback, 10 )
@@ -33,11 +34,11 @@ class SparkieNode(Node):
         self.ser = serial.Serial(port="/dev/ttyUSB0", baudrate=115200)
         #self.sensor_readings_file = open("data/sensor-readings.csv", "w")
         self.get_logger().info('Node Sparkie initialized!')
-
+        
     def wheelspeed_callback(self, msg):
         self.get_logger().info('Got wheel speeds : "%s"' %msg.data)
         self.ser.write(msg.data.encode())
-        
+
     def teleop_callback(self, msg):
         self.ser.write(msg.data.encode())
         
@@ -72,15 +73,15 @@ class SparkieNode(Node):
                 msg_enc.data = data[0]
                 self.publisher_odom.publish(msg_enc)
                 self.get_logger().info('Missed Data!')
-    		
+                
+
 def main(args=None):
     rclpy.init(args=args)
-    sparkie_node = SparkieNode()
-    sparkie_node.ser.flush()
-    rclpy.spin(sparkie_node)
+    s = Sparkie()
+    s.ser.flush()
+    rclpy.spin(s)
     #sparkie_node.sensor_readings_file.close()
-    sparkie_node.destroy_node()
-    
+    s.destroy_node()
     rclpy.shutdown()
     
 

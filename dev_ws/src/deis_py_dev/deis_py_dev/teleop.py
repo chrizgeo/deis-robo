@@ -31,6 +31,7 @@ def getKey(key_timeout):
     
 #can use this method also for getting the pressed key
 '''
+
 def getKey():
 	old_settings = termios.tcgetattr(sys.stdin)
 	tty.setcbreak(sys.stdin.fileno())
