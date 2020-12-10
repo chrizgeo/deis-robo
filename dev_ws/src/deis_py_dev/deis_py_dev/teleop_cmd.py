@@ -73,7 +73,9 @@ class CMD(Node):
         #
         # clip to +- 100%
         left_percentage = max (min (left_percentage, 100.0), -100.0)
+        left_percentage = -int(round(left_percentage)) # Added a minus since you have switched the motors
         right_percentage = max (min (right_percentage, 100.0), -100.0)
+        right_percentage = int(round(right_percentage))
         #
         msg.data = '%s %s \n' % (left_percentage, right_percentage)
         self.publisher_.publish(msg)
