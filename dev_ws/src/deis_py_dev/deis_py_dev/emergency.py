@@ -188,9 +188,6 @@ class SuperDrone(Node):
             print("Invalid data!")
             return
 
-        x = int(data[0])
-        y = int(data[1])
-
         distance, q2 = getRoute(self.X, self.Y, x, y)
 
         # Takeoff
