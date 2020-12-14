@@ -1,4 +1,4 @@
-#! python3
+#! /usr/bin/env python3
 
 # Ioannis Broumas
 # ioabro17@student.hh.se
@@ -17,7 +17,7 @@ class GPS(Node):
 
     def __init__(self):
         super().__init__('gps')
-        self.publisher_ = self.create_publisher(Point, 'GPS', 10)
+        self.publisher_ = self.create_publisher(Point, 'josefGPS', 10)
         self.subscription_positions = self.create_subscription(
             String,
             '/robotPositions',
@@ -35,16 +35,9 @@ class GPS(Node):
         data = msg.data.strip("[]'")
         data = data.split(sep=";")
         data = data[0] # Group1 should be first, change accordingly
-        Latitude = float(data[0])
-        Longitude = float(data[1])
-        LongDeg = floor(Longitude/100) + (Longitude - floor(Longitude/100)*100)/60
-        LatDeg = floor(Latitude/100) + (Latitude - floor(Latitude/100)*100)/60
-
-        F_lon = 62393
-        F_lat = 111342
-
-        X = F_lon * LongDeg
-        Y = F_lat * LatDeg
+        # I don't know!
+        X = 1
+        Y = 1
         point = Point()
         point.x = X
         point.y = Y
@@ -60,9 +53,6 @@ class GPS(Node):
         msg.data = data[0] + " " + data[1]
         self.publisher_.publish(msg)
         
-
-
-
 def main(args=None):
     rclpy.init(args=args)
     g = GPS()
