@@ -17,7 +17,7 @@ from rclpy.node import Node
 from std_msgs.msg import String
 from geometry_msgs.msg import Point
 
-Sparkie_ID = 1 # Change accordingly
+Sparkie_ID = 15 # Change accordingly
 Drone_ID = 2 # Change accordingly
 
 # Constant parameters used in Aruco methods
@@ -39,7 +39,7 @@ def main(args=None):
     point = Point()
 
     # IP camera on the ceiling
-    cam = cv.VideoCapture('rtsp://192.168.1.4:554/axis-media/media.amp')
+    cam = cv.VideoCapture('rtsp://192.168.1.2:554/axis-media/media.amp')
 
     if not cam.isOpened():
         print('--(!)Error opening video capture')
@@ -50,9 +50,9 @@ def main(args=None):
         exit()
 
     HorizontalPixels = cam.get(3)
-    # print(cam.get(3)) # Width - Horizontal
+    # print("Horizontal: ", cam.get(3)) # Width - Horizontal
     VerticalPixels = cam.get(4)
-    # print(cam.get(4)) # Height - Vertical
+    # print("Verical: ", cam.get(4)) # Height - Vertical
     # Resolution = HorizontalPixels * VerticalPixels
     VerticalDistance = 2225 # 2425
     HorizontalDistance = 3035 # 3635
@@ -85,12 +85,14 @@ def main(args=None):
                         Y = y_mm_to_pixel * cy
                         # Prepare and publish the point
                         point.x = X
-                        point.y = Y
+                        point.y = VerticalDistance - Y
                         point.z = .0
                         r.sparkie_publisher_.publish(point)
                         # Outline the detected marker in our image
                         # frame = aruco.drawDetectedMarkers(frame, corner, borderColor=(0, 0, 255))
-                        print(X, Y)
+                        print("ID: ", i)
+                        print("X: ", X)
+                        print("Y: ", VerticalDistance - Y)
                     if i == Drone_ID:
                         # Find X, Y of the center pixel
                         cx = (corner[0][0][0] + corner[0][1][0] + corner[0][2][0] + corner[0][3][0]) / 4
@@ -105,7 +107,8 @@ def main(args=None):
                         r.drone_publisher_.publish(point)
                         # Outline the detected marker in our image
                         # frame = aruco.drawDetectedMarkers(frame, corner, borderColor=(0, 0, 255))
-                        print(X, Y)
+                        #print("Drone :")
+                        #print(X, VerticalDistance - Y)
                         
             frame = aruco.drawDetectedMarkers(frame, corners, borderColor=(0, 0, 255))
             # Show the frame

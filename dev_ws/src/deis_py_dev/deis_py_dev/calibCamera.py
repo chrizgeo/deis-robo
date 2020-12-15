@@ -49,7 +49,7 @@ while count < 51:
         # Draw and display the corners
         cv.drawChessboardCorners(QueryImg, (9,6), corners2, ret)
         cv.imshow('img', QueryImg)
-        if cv.waitKey(500) == 27: # Wait for 10ms, if key == 27 (esc char) break
+        if cv.waitKey(100) == 27: # Wait for 10ms, if key == 27 (esc char) break
             break
 
 cv.destroyAllWindows()

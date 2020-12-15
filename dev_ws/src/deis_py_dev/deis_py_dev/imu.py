@@ -33,7 +33,7 @@ class IMU(Node):
             'imu_r',
             self.listener_callback,
             10)
-        self.get_logger().info('Node Sparkie initialized!')
+        self.get_logger().info('Node Imu initialized!')
     
 
     def listener_callback(self, msg):
