@@ -8,7 +8,7 @@
 import math
 import numpy as np
 import time
-from ibtello import Tello
+from tello import Tello
 import socket
 
 #ROS 2
@@ -18,8 +18,8 @@ from std_msgs.msg import String
 
 # ros2 topic pub 'emergency' 'std_msgs/String' '{data:700;700}'
 
-Base = [ 180, 170 ] # cm
-Akut = [ 290, 60 ] # cm
+Base = [ 1800, 1700 ] # mm
+Akut = [ 2900, 600 ] # mm
 
 def angle_between(p1, p2, p3):
     x1, y1 = p1
@@ -83,7 +83,7 @@ def getRoute(sx, sy, gx, gy):
     if a1_theta > R_theta:
         return a2, int((360 + a1_theta - q2) % 360)
     else:
-        return a2, int((a1_theta + q2))
+        return a2, int(a1_theta + q2)
 
 
 class SuperDrone(Node):
@@ -92,7 +92,7 @@ class SuperDrone(Node):
         super().__init__('drone')
         self.subscription = self.create_subscription(
             String,
-            '112',
+            'emergency',
             self.listener_callback,
             10)
 
@@ -157,7 +157,7 @@ class SuperDrone(Node):
 
     def GoToPoint(self, gx, gy):
         distance, q2 = getRoute(self.X, self.Y, gx, gy)
-        distance = distance/100
+        distance = distance/1000
         print("Distance", distance)
         self.Turn(gx, gy, q2)
         time.sleep(5)
@@ -173,9 +173,30 @@ class SuperDrone(Node):
         timestamp = self.get_clock().now().to_msg()
         data = msg.data.strip("[']")
         data = data.split(sep=";")
-        x = data[0]
-        y = data[1]
+        # Validate data
+        if len(data) != 2:
+            print("Invalid data!")
+            return
+        if not data[0].isdigit() or not data[1].isdigit():
+            print("Invalid data!")
+            return
 
+        x = int(data[0])
+        y = int(data[1])
+
+        if x > 3635 or y > 2425:
+            print("Invalid data!")
+            return
+
+        battery = self.drone.get_battery()
+        if 20 >= battery:
+            print("Low Battery -%d-" %battery)
+            print("Emergency Drone Shutting Down!")
+            self.drone.land()
+            self.drone.__del__()
+            self.destroy_node()
+            rclpy.shutdown()
+            
         distance, q2 = getRoute(self.X, self.Y, x, y)
 
         # Takeoff
@@ -248,8 +269,7 @@ class SuperDrone(Node):
         # Land
         self.drone.land()
         print('SuperDrone has landed!')
-
-
+        
 
 def main(args=None):
     rclpy.init(args=args)
