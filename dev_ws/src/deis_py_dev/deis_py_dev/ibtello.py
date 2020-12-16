@@ -96,10 +96,10 @@ class Tello:
         # self.local_video_port = 11111  # port for receiving video stream
         # self.socket_video.bind((local_ip, self.local_video_port))
 
-        # thread for receiving video
-        self.receive_video_thread = threading.Thread(target=self._receive_video_thread)
-        self.receive_video_thread.daemon = True
-        self.receive_video_thread.start() 
+        # # thread for receiving video
+        # self.receive_video_thread = threading.Thread(target=self._receive_video_thread)
+        # self.receive_video_thread.daemon = True
+        # self.receive_video_thread.start() 
 
         # to receive video -- send cmd: command, streamon
         self.socket.sendto(b'streamon', self.tello_address)
@@ -151,18 +151,18 @@ class Tello:
             except socket.error as exc:
                 print ("Caught exception socket.error : %s" % exc)
 
-    def _receive_video_thread(self):
-        """
-        Listens for video streaming from the Tello.
-        Runs as a thread, sets self.frame to the most recent frame Tello captured.
-        """
-        cap = cv.VideoCapture("udp://@0.0.0.0:11111")
-        print("Hej!")
-        while self.stream_state:
-            ret, self.frame = cap.read()
-            if (ret):
-                cv.imshow('Tello',self.frame)
-            # print("Hej igen!")
+    # def _receive_video_thread(self):
+    #     """
+    #     Listens for video streaming from the Tello.
+    #     Runs as a thread, sets self.frame to the most recent frame Tello captured.
+    #     """
+    #     cap = cv.VideoCapture("udp://@0.0.0.0:11111")
+    #     print("Hej!")
+    #     while self.stream_state:
+    #         ret, self.frame = cap.read()
+    #         if (ret):
+    #             cv.imshow('Tello',self.frame)
+    #         # print("Hej igen!")
     
     def parse_state(self, state: str):
         """Parse a state line to a dictionary
