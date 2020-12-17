@@ -8,8 +8,9 @@
 # Based on:
 # https://github.com/dji-sdk/Tello-Python
 # https://github.com/damiafuentes/DJITelloPy/blob/master/djitellopy/tello.py
+# https://github.com/Virodroid/easyTello/blob/master/easytello/tello.py
 
-
+import PIL
 import socket
 import threading
 from threading import Thread
@@ -72,7 +73,6 @@ class Tello:
         self.response = None  
 
         self.frame = None  # numpy array BGR -- current camera output frame
-        self.is_freeze = False  # freeze current camera output
         self.last_frame = None
 
         # self.cap = cv2.VideoCapture("udp://@0.0.0.0:11111")
@@ -82,6 +82,7 @@ class Tello:
         
         # Commands
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # socket for sending cmd
+        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.socket.bind((local_ip, local_port))
 
         # thread for receiving cmd ack
@@ -96,7 +97,7 @@ class Tello:
         # self.local_video_port = 11111  # port for receiving video stream
         # self.socket_video.bind((local_ip, self.local_video_port))
 
-        # # thread for receiving video
+        # thread for receiving video
         # self.receive_video_thread = threading.Thread(target=self._receive_video_thread)
         # self.receive_video_thread.daemon = True
         # self.receive_video_thread.start() 
@@ -121,24 +122,11 @@ class Tello:
         self.socket_state.sendto('command'.encode('utf-8'), self.tello_address)
 
 
-    def __del__(self):
+    def shutdown(self):
         """Closes the local socket."""
         self.socket.close()
         # self.socket_video.close()
         self.socket_state.close()
-    
-    def read(self):
-        """Return the last frame from camera."""
-        if self.is_freeze:
-            return self.last_frame
-        else:
-            return self.frame
-
-    def video_freeze(self, is_freeze=True):
-        """Pause video output -- set is_freeze to True"""
-        self.is_freeze = is_freeze
-        if is_freeze:
-            self.last_frame = self.frame
 
     def _receive_thread(self):
         """Listen to responses from the Tello.
@@ -149,7 +137,11 @@ class Tello:
                 self.response, ip = self.socket.recvfrom(2048)
                 print("Response ", self.response)
             except socket.error as exc:
-                print ("Caught exception socket.error : %s" % exc)
+                print ("Receive Thread caught exception socket.error : %s" % exc)
+
+    def read(self):
+        """Return the last frame from camera."""
+        return self.frame
 
     # def _receive_video_thread(self):
     #     """
@@ -163,6 +155,54 @@ class Tello:
     #         if (ret):
     #             cv.imshow('Tello',self.frame)
     #         # print("Hej igen!")
+
+    def _video_thread(self):
+        # Creating stream capture object
+        cap = cv.VideoCapture("udp://@0.0.0.0:11111")  # ('udp://@' + self.tello_ip + ':11111')
+        # Runs while 'stream_state' is True
+        print("Hej!")
+        while self.stream_state:
+            ret, self.last_frame = cap.read()
+            if ret:
+                cv.imshow('DJI Tello', self.last_frame)
+
+                # Video Stream is closed if escape key is pressed
+                k = cv.waitKey(1) & 0xFF
+                if k == 27:
+                    break
+        cap.release()
+        cv.destroyAllWindows()
+
+    def stream_on(self):
+        self.send_command('streamon')
+        self.stream_state = True
+        self.video_thread = threading.Thread(target=self._video_thread)
+        self.video_thread.daemon = True
+        self.video_thread.start()
+
+    def stream_off(self):
+        self.stream_state = False
+        self.send_command('streamoff')
+
+    # def stream_on(self):
+    #     """Turn on video streaming. Use `tello.get_frame_read` afterwards.
+    #     Video Streaming is supported on all tellos when in AP mode (i.e.
+    #     when your computer is connected to Tello-XXXXXX WiFi network).
+    #     Currently Tello EDUs do not support video streaming while connected
+    #     to a wifi network.
+    #     !!! note
+    #         If the response is 'Unknown command' you have to update the Tello
+    #         firmware. This can be done using the official Tello app.
+    #     """
+    #     self.send_command("streamon")
+    #     self.stream_state = True
+
+    # def stream_off(self):
+    #     """Turn off video streaming.
+    #     """
+    #     self.send_command("streamoff")
+    #     self.stream_state = False
+
     
     def parse_state(self, state: str):
         """Parse a state line to a dictionary
@@ -189,11 +229,8 @@ class Tello:
                 except Exception as e:
                     print('Error parsing state value for {}: {} to {}'
                                        .format(key, value, Tello.state_field_converters[key]))
-
             self.state[key] = value
-
         return
-
 
     def _receive_state_thread(self):
         """
@@ -206,7 +243,7 @@ class Tello:
                 # print(message.decode('utf-8'))
                 self.parse_state(message.decode('ASCII')) # 'utf-8' ?
             except socket.error as exc:
-                print ("Caught exception socket.error : %s" % exc)
+                print ("State_thread caught exception socket.error : %s" % exc)
 
     def send_command(self, command):
         """
@@ -214,7 +251,6 @@ class Tello:
         :param command: Command to send.
         :return (str): Response from Tello.
         """
-        
         print (">> send cmd: {}".format(command))
         self.abort_flag = False
         timer = threading.Timer(self.command_timeout, self.set_abort_flag)
@@ -235,26 +271,6 @@ class Tello:
         self.response = None
 
         return response
-
-    def stream_on(self):
-        """Turn on video streaming. Use `tello.get_frame_read` afterwards.
-        Video Streaming is supported on all tellos when in AP mode (i.e.
-        when your computer is connected to Tello-XXXXXX WiFi network).
-        Currently Tello EDUs do not support video streaming while connected
-        to a wifi network.
-
-        !!! note
-            If the response is 'Unknown command' you have to update the Tello
-            firmware. This can be done using the official Tello app.
-        """
-        self.send_command("streamon")
-        self.stream_state = True
-
-    def stream_off(self):
-        """Turn off video streaming.
-        """
-        self.send_command("streamoff")
-        self.stream_state = False
 
     
     def set_abort_flag(self):
@@ -285,10 +301,8 @@ class Tello:
         Returns:
             str: Response from Tello, 'OK' or 'FALSE'.
         """
-
         speed = float(speed)
         speed = int(round(speed * 27.7778))
-
         return self.send_command('speed %s' % speed)
 
     def rotate_cw(self, degrees):
@@ -353,33 +367,6 @@ class Tello:
         """
         return self.state['bat']
 
-    def get_flight_time(self):
-        """Returns the number of seconds elapsed during flight.
-        Returns:
-            int: Seconds elapsed during flight.
-        """
-        flight_time = self.send_command('time?')
-        try:
-            flight_time = int(flight_time)
-        except:
-            pass
-        return flight_time
-
-    def get_speed(self):
-        """Returns the current speed.
-        Returns:
-            int: Current speed in KPH or MPH.
-        """
-        speed = self.send_command('speed?')
-
-        try:
-            speed = float(speed)
-            speed = round((speed / 27.7778), 1)
-        except:
-            pass
-
-        return speed
-
     def land(self):
         """Initiates landing.
         Returns:
@@ -401,7 +388,6 @@ class Tello:
         """
         distance = float(distance)
         distance = int(round(distance * 100))
-
         return self.send_command('%s %s' % (direction, distance))
 
     def move_backward(self, distance):
@@ -461,3 +447,43 @@ class Tello:
             str: Response from Tello, 'OK' or 'FALSE'.
         """
         return self.move('up', distance)
+
+    # def get_frame_read(self) -> 'BackgroundFrameRead':
+    #     """Get the BackgroundFrameRead object from the camera drone. Then, you just need to call
+    #     backgroundFrameRead.frame to get the actual frame received by the drone.
+    #     Returns:
+    #         BackgroundFrameRead
+    #     """
+    #     if self.background_frame_read is None:
+    #         self.background_frame_read = BackgroundFrameRead(self).start()
+    #     return self.background_frame_read
+
+# class BackgroundFrameRead:
+#     """
+#     This class read frames from a VideoCapture in background. Use
+#     backgroundFrameRead.frame to get the current frame.
+#     """
+
+#     def __init__(self, tello):
+#         tello.cap = cv.VideoCapture("udp://@0.0.0.0:11111")
+#         self.cap = tello.cap
+
+#         if not self.cap.isOpened():
+#             self.cap.open("udp://@0.0.0.0:11111")
+
+#         self.grabbed, self.frame = self.cap.read()
+#         self.stopped = False
+
+#     def start(self):
+#         Thread(target=self.update_frame, args=(), daemon=True).start()
+#         return self
+
+#     def update_frame(self):
+#         while not self.stopped:
+#             if not self.grabbed or not self.cap.isOpened():
+#                 self.stop()
+#             else:
+#                 (self.grabbed, self.frame) = self.cap.read()
+
+#     def stop(self):
+#         self.stopped = True
