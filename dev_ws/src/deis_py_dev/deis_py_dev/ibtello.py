@@ -141,7 +141,8 @@ class Tello:
 
     def read(self):
         """Return the last frame from camera."""
-        return self.frame
+        frame = self.last_frame
+        return frame
 
     # def _receive_video_thread(self):
     #     """
@@ -163,8 +164,10 @@ class Tello:
         print("Hej!")
         while self.stream_state:
             ret, self.last_frame = cap.read()
+            # Comment out the below if you are going to run operations on the frame!
             if ret:
-                cv.imshow('DJI Tello', self.last_frame)
+                frame_resized = cv.resize(self.last_frame, (640,360))    
+                cv.imshow("SuperDrone", frame_resized)
 
                 # Video Stream is closed if escape key is pressed
                 k = cv.waitKey(1) & 0xFF
