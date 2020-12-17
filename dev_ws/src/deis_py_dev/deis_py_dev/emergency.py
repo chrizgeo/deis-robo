@@ -276,6 +276,7 @@ class SuperDrone(Node):
 def main(args=None):
     rclpy.init(args=args)
     d = SuperDrone()
+    d.drone.stream_on()
     rclpy.spin(d)
     # Destroy the node explicitly
     d.destroy_node()
