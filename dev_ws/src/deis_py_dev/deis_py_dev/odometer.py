@@ -94,8 +94,8 @@ class Odometer(Node):
             dD = (dDr + dDl) / 2 
             dA = (dDr - dDl) / self.WHEEL_BASE
             # Calculate the change in X and Y (World co-ordinates)    
-            dX = dD*cos( self.A + dA/2 )*dt
-            dY = dD*sin( self.A + dA/2 )*dt
+            dX = dD*cos( self.A + dA/2 )
+            dY = dD*sin( self.A + dA/2 )
             # Predict the new state variables (World co-ordinates)
             self.X = self.X + dX
             self.Y = self.Y + dY
