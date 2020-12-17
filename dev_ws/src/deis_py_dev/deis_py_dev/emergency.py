@@ -8,8 +8,9 @@
 import math
 import numpy as np
 import time
-from tello import Tello
+from ibtello import Tello
 import socket
+import cv2 as cv
 
 #ROS 2
 import rclpy
@@ -193,7 +194,7 @@ class SuperDrone(Node):
             print("Low Battery -%d-" %battery)
             print("Emergency Drone Shutting Down!")
             self.drone.land()
-            self.drone.__del__()
+            self.drone.shutdown()
             self.destroy_node()
             rclpy.shutdown()
             
@@ -269,7 +270,8 @@ class SuperDrone(Node):
         # Land
         self.drone.land()
         print('SuperDrone has landed!')
-        
+
+
 
 def main(args=None):
     rclpy.init(args=args)
